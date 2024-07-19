@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<html>
+<head>
+
+<link rel="stylesheet" href="css/vis.css" type="text/css" />
+
+<!-- <script src="stroom-content/Visualisations/Version3/Dependencies/D3/D3.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/Chroma/Chroma.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/D3-Grid/D3-Grid.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/D3-Tip/D3-Tip.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/JSHashes/JSHashes.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/Leaflet/Leaflet.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/Leaflet/LeafletCSS.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/Leaflet/LeafletFontAwesomeMarkersCSS.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/LeafletDraw.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/LeafletDrawCSS.Script.resource.js" charset="utf-8"></script>
+		<script src="stroom-content/Visualisations/Version3/Dependencies/Underscore/Underscore.Script.resource.js" charset="utf-8"></script> -->
+
+		<!--Common code -->
+		<script src="stroom-content/Visualisations/Version3/Common.Script.resource.js" charset="utf-8"></script>
+		<!-- <script src="stroom-content/Visualisations/Version3/CSS.Script.resource.js" charset="utf-8"></script> -->
+		<script src="stroom-content/Visualisations/Version3/GenericGrid.Script.resource.js" charset="utf-8"></script>
+		<!-- <script src="stroom-content/Visualisations/Version3/ThemeCSS.Script.resource.js" charset="utf-8"></script> -->
+		<script src="./vis/TestData.js" charset="utf-8"></script>
+		<script src="./vis/TestIframeVis.js" charset="utf-8"></script>
+
+<script type="text/javascript" src="vis.js"></script>
+<div id="container" class="control-group">
+</div>
+  <div id="svgdataurl"></div>
+  <canvas width="1000" height="1000" style="display:none"></canvas>
+
+
+</head>
+<body onresize="autoResize()">
+  <div id="controls">
+    <div id="buttonControls" class="control-group">
+      <button onclick="addGridSeries()">G+</button>
+      <button onclick="removeGridSeries()">G-</button>
+      <button onclick="addSeries()">S+</button>
+      <button onclick="removeSeries()">S-</button>
+      <button onclick="alterValues()">V</button>
+      <button onclick="saveSvg()">SVG</button>
+    </div>
+  </div>
+
+  <div id="svgdataurl"></div>
+			<canvas width="1000" height="1000" style="display:none"></canvas>
+</body>
+</html>
