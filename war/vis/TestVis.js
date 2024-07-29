@@ -24,9 +24,7 @@
         let rawType = getRawType(visType);
         console.log(rawType);
         
-        sendInjectVisName();
-        const iframe = document.getElementById('myIframe');
-        const iframeWindow = iframe.contentWindow;
+        fetchAndInjectScripts(visName);
     }
 
     function getVisName() {
@@ -58,53 +56,24 @@
         return type.split("-")[0];
     }
 
-    function sendInjectVisName() {
-        // injectScripts allows you to inject needed scripts
-        const iframe = document.getElementById('myIframe');
-        const iframeWindow = iframe.contentWindow;
-
-        
-        let json = {
-            frameId: 123,
-            callbackId: 123,
-            data: {
-                functionName: "visualisationManager.injectScripts",
-                params: [
-                    [
-                        {
-                        name: visName + ".Script.resource.js",
-                        url: "/stroom-content/Visualisations/Version3/" + visName + ".Script.resource.js"
-                        }
-                    ]
-                ]
-            }
-        };
-        let jsonString = JSON.stringify(json);
-        if (iframeWindow) {
-            iframeWindow.postMessage(jsonString, '*');
-        }
-
-        fetchAndInjectScripts();
-    }
-
-    function fetchAndInjectScripts() {
-        fetchAndParseXML()
+    function fetchAndInjectScripts(xmlName) {
+        fetchAndParseXML(xmlName)
             .then(({ xmlDoc, url }) => {
-                loadDependencies(xmlDoc, url)
+                loadDependencies(xmlDoc, url, xmlName)
                     .then(scripts => {
                         assembleAndPostJSON(scripts);
                     })
                     .catch(error => {
-                        callback.onFailure("Failed to load dependencies: " + error.message);
+                        console.error("Failed to load dependencies: ", error);
                     });
             })
             .catch(error => {
-                callback.onFailure("Failed to fetch and parse XML: " + error.message);
+                console.error("Failed to fetch and parse XML: ", error);
             });
     }
 
-    function dependencyUrls(){
-        const baseName = visName.split('.')[0];
+    function dependencyUrls(xmlName){
+        const baseName = xmlName.split('.')[0];
         const urls = [];
         urls[0] = "../stroom-content/Visualisations/Version3/" + baseName + ".Script.xml";
         urls[1] = "../stroom-content/Visualisations/Version3/Dependencies/" + baseName + ".Script.xml";
@@ -119,70 +88,71 @@
         return urls;
     }
 
-    function fetchAndParseXML() {
+    function fetchAndParseXML(xmlName) {
         return new Promise((resolve, reject) => {
-            const urls = dependencyUrls();
+            const urls = dependencyUrls(xmlName);
             const fetchPromises = urls.map(url => {
                 return fetch(url)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error("Fetch failed for " + url + ". Status: " + response.status);
+                            throw console.error("Fetch failed for " + url + ". Status: " + response.status);
                         }
-                        return response.text().then(xmlText => ({ xmlText, url })); // Attach URL to response
+                        return response.text().then(xmlText => ({ xmlText, url }));
                     })
                     .then(({ xmlText, url }) => {
                         const parser = new DOMParser();
                         const xmlDoc = parser.parseFromString(xmlText, "application/xml");
-                        return { xmlDoc, url }; // Return parsed XML document and URL
+                        return { xmlDoc, url };
                     });
             });
     
             Promise.any(fetchPromises)
                 .then(({ xmlDoc, url }) => {
-                    resolve({ xmlDoc, url }); // Resolve with parsed XML document and URL
+                    resolve({ xmlDoc, url });
                 })
                 .catch(error => {
-                    reject(error); // Reject with error from Promise.any
+                    reject(console.error);
                 });
         });
     }
     
-    function loadDependencies(dependenciesXML, baseUrl) {
+    function loadDependencies(dependenciesXML, baseUrl, xmlName) {
         return new Promise((resolve, reject) => {
+            const scripts = [];
+            let scriptUrl = baseUrl.replace(/\.xml$/, ".resource.js");
+            scriptUrl = scriptUrl.replace(xmlName, xmlName);
+            scripts.push({ name: xmlName, url: scriptUrl });
+
             const scriptElement = dependenciesXML.querySelector('script');
             if (!scriptElement) {
-                reject(new Error("No script element found"));
+                reject(console.error("No script element found"));
                 return;
             }
     
             const dependenciesString = scriptElement.querySelector('dependenciesXML').textContent;
             if (!dependenciesString) {
-                reject(new Error("No dependenciesXML element found"));
+                reject(cnosole.error("No dependenciesXML element found"));
                 return;
             }
     
             const dependenciesParser = new DOMParser();
             const dependenciesDoc = dependenciesParser.parseFromString(dependenciesString, 'application/xml');
-    
             const docElements = dependenciesDoc.getElementsByTagName('doc');
-            const scripts = [];
     
             for (let i = 0; i < docElements.length; i++) {
                 let type = docElements[i].getElementsByTagName('type')[0].textContent;
                 let name = docElements[i].getElementsByTagName('name')[0].textContent;
     
                 if (type === 'Script') {
-                    let scriptUrl = baseUrl.replace(/\.xml$/, ".resource.js");
-                    scriptUrl = scriptUrl.replace(visName, name);
-                    scripts.push({ name: name, url: scriptUrl });
+                    fetchAndInjectScripts(name); // Recursive call
                 }
             }
     
             if (scripts.length > 0) {
                 console.log(scripts);
-                resolve(scripts); // Resolve with scripts array
+                resolve(scripts);
             } else {
-                reject(new Error("No script dependencies found"));
+                reject(cnosole.error("No script dependencies found"));
             }
         });
     }
@@ -253,7 +223,7 @@
     }
 
     var commonFunctions = visualisations.commonFunctions;
-    var testData = new TestData();
+    // var testData = new TestData();
     var vis = null;
     var pass = 0;
     var settings = {};
