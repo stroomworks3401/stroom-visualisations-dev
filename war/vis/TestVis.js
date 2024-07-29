@@ -14,45 +14,19 @@
  * limitations under the License.
  */
 (function() {
+    var visName;
+
     this.changeVis = function() {
         
         let visType = getVisType();
-        let visName = getVisName();
+        visName = getVisName();
+        console.log(visName);
         let rawType = getRawType(visType);
         console.log(rawType);
         
-        sendMessageToIframe(visName);
+        sendInjectVisName();
         const iframe = document.getElementById('myIframe');
         const iframeWindow = iframe.contentWindow;
-    }
-
-    function sendMessageToIframe(visName) {
-        // injectScripts allows you to inject needed scripts
-        const iframe = document.getElementById('myIframe');
-        const iframeWindow = iframe.contentWindow;
-
-        //Form a two element array of params for the call, 
-    //the first element is the array of scripts
-    //the second element is the callback object
-        let json = {
-            frameId: 123,
-            callbackId: 123,
-            data: {
-                functionName: "visualisationManager.injectScripts",
-                params: [
-                    [
-                        {
-                        name: visName + ".Script.resource.js",
-                        url: "/stroom-content/Visualisations/Version3/" + visName + ".Script.resource.js"
-                        }
-                    ]
-                ]
-            }
-        };
-        let jsonString = JSON.stringify(json);
-        if (iframeWindow) {
-            iframeWindow.postMessage(jsonString, '*');
-        }
     }
 
     function getVisName() {
@@ -83,6 +57,175 @@
     function getRawType(type){
         return type.split("-")[0];
     }
+
+    function sendInjectVisName() {
+        // injectScripts allows you to inject needed scripts
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+
+        
+        let json = {
+            frameId: 123,
+            callbackId: 123,
+            data: {
+                functionName: "visualisationManager.injectScripts",
+                params: [
+                    [
+                        {
+                        name: visName + ".Script.resource.js",
+                        url: "/stroom-content/Visualisations/Version3/" + visName + ".Script.resource.js"
+                        }
+                    ]
+                ]
+            }
+        };
+        let jsonString = JSON.stringify(json);
+        if (iframeWindow) {
+            iframeWindow.postMessage(jsonString, '*');
+        }
+
+        fetchAndInjectScripts();
+    }
+
+    function fetchAndInjectScripts() {
+        fetchAndParseXML()
+            .then(({ xmlDoc, url }) => {
+                loadDependencies(xmlDoc, url)
+                    .then(scripts => {
+                        assembleAndPostJSON(scripts);
+                    })
+                    .catch(error => {
+                        callback.onFailure("Failed to load dependencies: " + error.message);
+                    });
+            })
+            .catch(error => {
+                callback.onFailure("Failed to fetch and parse XML: " + error.message);
+            });
+    }
+
+    function dependencyUrls(){
+        const baseName = visName.split('.')[0];
+        const urls = [];
+        urls[0] = "../stroom-content/Visualisations/Version3/" + baseName + ".Script.xml";
+        urls[1] = "../stroom-content/Visualisations/Version3/Dependencies/" + baseName + ".Script.xml";
+        urls[2] = "../stroom-content/Visualisations/Version3/Dependencies/Chroma/" + baseName + ".Script.xml";
+        urls[3] = "../stroom-content/Visualisations/Version3/Dependencies/D3/" + baseName + ".Script.xml";
+        urls[4] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Grid/" + baseName + ".Script.xml";
+        urls[5] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Tip/" + baseName + ".Script.xml";
+        urls[6] = "../stroom-content/Visualisations/Version3/Dependencies/JSHashes/" + baseName + ".Script.xml";
+        urls[7] = "../stroom-content/Visualisations/Version3/Dependencies/Leaflet/" + baseName + ".Script.xml";
+        urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/" + baseName + ".Script.xml";
+        urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/Underscore/" + baseName + ".Script.xml";
+        return urls;
+    }
+
+    function fetchAndParseXML() {
+        return new Promise((resolve, reject) => {
+            const urls = dependencyUrls();
+            const fetchPromises = urls.map(url => {
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Fetch failed for " + url + ". Status: " + response.status);
+                        }
+                        return response.text().then(xmlText => ({ xmlText, url })); // Attach URL to response
+                    })
+                    .then(({ xmlText, url }) => {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+                        return { xmlDoc, url }; // Return parsed XML document and URL
+                    });
+            });
+    
+            Promise.any(fetchPromises)
+                .then(({ xmlDoc, url }) => {
+                    resolve({ xmlDoc, url }); // Resolve with parsed XML document and URL
+                })
+                .catch(error => {
+                    reject(error); // Reject with error from Promise.any
+                });
+        });
+    }
+    
+    function loadDependencies(dependenciesXML, baseUrl) {
+        return new Promise((resolve, reject) => {
+            const scriptElement = dependenciesXML.querySelector('script');
+            if (!scriptElement) {
+                reject(new Error("No script element found"));
+                return;
+            }
+    
+            const dependenciesString = scriptElement.querySelector('dependenciesXML').textContent;
+            if (!dependenciesString) {
+                reject(new Error("No dependenciesXML element found"));
+                return;
+            }
+    
+            const dependenciesParser = new DOMParser();
+            const dependenciesDoc = dependenciesParser.parseFromString(dependenciesString, 'application/xml');
+    
+            const docElements = dependenciesDoc.getElementsByTagName('doc');
+            const scripts = [];
+    
+            for (let i = 0; i < docElements.length; i++) {
+                let type = docElements[i].getElementsByTagName('type')[0].textContent;
+                let name = docElements[i].getElementsByTagName('name')[0].textContent;
+    
+                if (type === 'Script') {
+                    let scriptUrl = baseUrl.replace(/\.xml$/, ".resource.js");
+                    scriptUrl = scriptUrl.replace(visName, name);
+                    scripts.push({ name: name, url: scriptUrl });
+                }
+            }
+    
+            if (scripts.length > 0) {
+                console.log(scripts);
+                resolve(scripts); // Resolve with scripts array
+            } else {
+                reject(new Error("No script dependencies found"));
+            }
+        });
+    }
+
+    function assembleAndPostJSON(scripts) {
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+    
+        let params = scripts.map(script => ({
+            name: script.name,
+            url: script.url
+        }));
+    
+        let json = {
+            frameId: 123,
+            callbackId: 123,
+            data: {
+                functionName: "visualisationManager.injectScripts",
+                params: [params]
+            }
+        };
+    
+        let jsonString = JSON.stringify(json);
+        if (iframeWindow) {
+            iframeWindow.postMessage(jsonString, '*');
+        }
+    }
+
+    // .setVisType instansiates the specific vis
+        // let json = {
+        //     frameId: 123,
+        //     callbackId: 123,
+        //     data: {
+        //        functionName: "visualisationManager.setVisType",
+        //        params: [
+        //         "visualisations." + rawType,
+        //         selectedTheme
+        //        ]
+        //     }
+        //  };
+        //  if (iframeWindow) {
+        //      iframeWindow.postMessage(json, '*');
+        //  }
 
     function show(type) {
         //var div = document.getElementById("visualisation");
