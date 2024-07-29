@@ -15,7 +15,55 @@
  */
 (function() {
     this.changeVis = function() {
-        show(getVisType());
+        
+        let visType = getVisType();
+        let visName = getVisName();
+        let rawType = getRawType(visType);
+        console.log(rawType);
+        
+        sendMessageToIframe(visName);
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+    }
+
+    function sendMessageToIframe(visName) {
+        // injectScripts allows you to inject needed scripts
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+
+        //Form a two element array of params for the call, 
+    //the first element is the array of scripts
+    //the second element is the callback object
+        let json = {
+            frameId: 123,
+            callbackId: 123,
+            data: {
+                functionName: "visualisationManager.injectScripts",
+                params: [
+                    [
+                        {
+                        name: visName + ".Script.resource.js",
+                        url: "/stroom-content/Visualisations/Version3/" + visName + ".Script.resource.js"
+                        }
+                    ]
+                ]
+            }
+        };
+        let jsonString = JSON.stringify(json);
+        if (iframeWindow) {
+            iframeWindow.postMessage(jsonString, '*');
+        }
+    }
+
+    function getVisName() {
+        if (visType.value.includes("-")) {
+            let index = visType.value.indexOf("-")
+            let visName = visType.value.substring(0, index);
+            return visName;
+        } else {
+            let visName = visType.value;
+            return visName;
+        }
     }
 
     function getVisType() {

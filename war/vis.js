@@ -224,9 +224,26 @@ function VisualisationManager() {
     if (vis && currentData) {
       vis.setData(currentContext, currentSettings, currentData);
     }
-    return {
-      injectNextScript: this.injectNextScript.bind(this)
-    };
+  };
+
+  var injectNextScript = function(scripts, callback) {
+    if (scripts.length > 0) {
+      var script = scripts.splice(0, 1)[0];
+      var cb = {
+        onSuccess : function(message) {
+          injectNextScript(scripts, callback);
+        },
+        onFailure : function(ex) {
+          callback.onFailure("Failed to inject script '" + script.name + "' - "
+              + ex.message);
+        }
+      };
+
+      new ScriptInjector().inject(script.url, cb);
+
+    } else {
+      callback.onSuccess(null);
+    }
   };
 
   var doStart = function(callback) {
@@ -299,43 +316,8 @@ function VisualisationManager() {
 /**
  * GLOBAL VISUALISATION MANAGER
  */
-VisualisationManager.prototype.injectNextScript = function(scripts, callback) {
-  // Implementation of injectNextScript function
-  
-  // if (!Array.isArray(scripts)) {
-  //   scripts = [scripts];
-  //   console.log("thats a hit");
-  // }
-  console.log("injectNextScript called with scripts:", scripts);
-  if (scripts.length > 0) {
-    const script = scripts.splice(0, 1)[0];
-    console.log("script: " + script);
-    const cb = {
-        onSuccess: function () {
-            console.log(script.name);
-            DependencyLoader.fetchAndInjectScripts(script.name, {
-                onSuccess: function (newScripts) {
-                    injectNextScript(newScripts.concat(scripts), callback);
-                },
-                onFailure: function (ex) {
-                    callback.onFailure(ex);
-                }
-            });
-        },
-        onFailure: function (ex) {
-            callback.onFailure("Failed to inject script '" + script.name + "' - " + ex.message);
-        }
-    };
-
-    console.log(script.url);
-    new ScriptInjector().inject(script.url, cb);
-  } else {
-      callback.onSuccess(null);
-  }
-}
-
 var visualisationManager = new VisualisationManager();
-window.injectNextScript = visualisationManager.injectNextScript.bind(visualisationManager);
+
 /**
  * LISTEN TO WINDOW MESSAGES
  */
@@ -348,7 +330,6 @@ var messageListener = function(event) {
 
     var message = JSON.stringify(obj);
 
-    
     event.source.postMessage(message, event.origin);
   };
 
@@ -363,10 +344,8 @@ var messageListener = function(event) {
     console.error("Ignoring event as host names do not match: hostname='" + hostname + "' eventHostname='" + eventHostname + "'");
     return;
   }
-  
-  // Allows direct JSON to be entered
-  var json = JSON.stringify(event.data);
-  json = JSON.parse(json)
+
+  var json = JSON.parse(event.data);
 
   if (json.data) {
     var frameId;
@@ -384,12 +363,9 @@ var messageListener = function(event) {
     if (!params) {
         params = [];
     }
+    params.push(callback);
 
-    //Form a two element array of params for the call, 
-    //the first element is the array of scripts
-    //the second element is the callback object
-    let args = [params, callback];
-    eval(json.data.functionName + ".apply(this, args);");
+    eval(json.data.functionName + ".apply(this, params);");
   }
 }
 
