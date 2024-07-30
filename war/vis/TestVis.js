@@ -17,10 +17,13 @@
     var visName;
     this.changeVis = function() {
         manageIframe();
-        // let visType = getVisType();
-        visName = getVisName();
-        // let rawType = getRawType(visType);
-        fetchAndInjectScripts(visName);
+        setTimeout(() => {
+            // let visType = getVisType();
+            visName = getVisName();
+            // let rawType = getRawType(visType);
+            fetchAndInjectScripts(visName);
+        }, 1000);
+        
     }
     
     function getVisName() {
@@ -56,24 +59,36 @@
         var iframe = document.getElementById('myIframe');
     
         if (iframe) {
-            // If iframe exists, remove it
-            iframe.parentNode.removeChild(iframe);
+                iframe.parentNode.removeChild(iframe);
         }
     
         var newIframe = document.createElement('iframe');
         newIframe.id = 'myIframe';
-        newIframe.src = 'vis.html';
-    
+        // Append a random query string to force the browser to fetch a new document
+        newIframe.src = 'vis.html?' + new Date().getTime();
+        
         // Append the new iframe to the div with id 'iframe'
         document.getElementById('iframe').appendChild(newIframe);
-    }
+        loadedScripts.clear();
+    }    
+
+    // Set to store loaded script names
+    let loadedScripts = new Set();
 
     function fetchAndInjectScripts(xmlName) {
+        // Check if script is already loaded
+        if (loadedScripts.has(xmlName)) {
+            console.log(`Script ${xmlName} already loaded.`);
+            return;
+        }
+
         fetchAndParseXML(xmlName)
             .then(({ xmlDoc, url }) => {
                 loadDependencies(xmlDoc, url, xmlName)
                     .then(scripts => {
                         assembleAndPostJSON(scripts);
+                        // Mark the script as loaded after dependencies are processed
+                        loadedScripts.add(xmlName);
                     })
                     .catch(error => {
                         console.error("Failed to load dependencies: ", error);
@@ -146,7 +161,7 @@
     
             const dependenciesString = scriptElement.querySelector('dependenciesXML').textContent;
             if (!dependenciesString) {
-                reject(cnosole.error("No dependenciesXML element found"));
+                reject(console.error("No dependenciesXML element found"));
                 return;
             }
     
@@ -261,7 +276,6 @@
 
     this.update = function() {
         setVisType();
-
         //remove any d3-tip divs left in the dom otherwise they build up on on each
         //call, cluttering up the dom
         // d3.selectAll(".d3-tip")
