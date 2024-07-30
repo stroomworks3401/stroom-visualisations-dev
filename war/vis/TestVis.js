@@ -15,18 +15,14 @@
  */
 (function() {
     var visName;
-
     this.changeVis = function() {
-        
-        let visType = getVisType();
+        manageIframe();
+        // let visType = getVisType();
         visName = getVisName();
-        console.log(visName);
-        let rawType = getRawType(visType);
-        console.log(rawType);
-        
+        // let rawType = getRawType(visType);
         fetchAndInjectScripts(visName);
     }
-
+    
     function getVisName() {
         if (visType.value.includes("-")) {
             let index = visType.value.indexOf("-")
@@ -56,6 +52,22 @@
         return type.split("-")[0];
     }
 
+    function manageIframe() {
+        var iframe = document.getElementById('myIframe');
+    
+        if (iframe) {
+            // If iframe exists, remove it
+            iframe.parentNode.removeChild(iframe);
+        }
+    
+        var newIframe = document.createElement('iframe');
+        newIframe.id = 'myIframe';
+        newIframe.src = 'vis.html';
+    
+        // Append the new iframe to the div with id 'iframe'
+        document.getElementById('iframe').appendChild(newIframe);
+    }
+
     function fetchAndInjectScripts(xmlName) {
         fetchAndParseXML(xmlName)
             .then(({ xmlDoc, url }) => {
@@ -72,6 +84,8 @@
             });
     }
 
+    // this isn't the best
+    // could automatically check if there is a directory called the dependency name (more future proof)
     function dependencyUrls(xmlName){
         const baseName = xmlName.split('.')[0];
         const urls = [];
@@ -116,6 +130,7 @@
         });
     }
     
+    // TODO remember which scripts it has seen before calling back to fetch
     function loadDependencies(dependenciesXML, baseUrl, xmlName) {
         return new Promise((resolve, reject) => {
             const scripts = [];
@@ -167,6 +182,8 @@
         }));
     
         let json = {
+
+            // Make more permanent
             frameId: 123,
             callbackId: 123,
             data: {
@@ -182,20 +199,26 @@
     }
 
     // .setVisType instansiates the specific vis
-        // let json = {
-        //     frameId: 123,
-        //     callbackId: 123,
-        //     data: {
-        //        functionName: "visualisationManager.setVisType",
-        //        params: [
-        //         "visualisations." + rawType,
-        //         selectedTheme
-        //        ]
-        //     }
-        //  };
-        //  if (iframeWindow) {
-        //      iframeWindow.postMessage(json, '*');
-        //  }
+    // add selected theme
+    function setVisType(){
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+        let json = {
+            frameId: 123,
+            callbackId: 123,
+            data: {
+               functionName: "visualisationManager.setVisType",
+               params: [
+                "visualisations." + visName,
+                "vis stroom-theme-dark"
+               ]
+            }
+        };
+        let jsonString = JSON.stringify(json);
+        if (iframeWindow) {
+            iframeWindow.postMessage(jsonString, '*');
+        }
+    }
 
     function show(type) {
         //var div = document.getElementById("visualisation");
@@ -237,204 +260,204 @@
     }
 
     this.update = function() {
+        setVisType();
+
         //remove any d3-tip divs left in the dom otherwise they build up on on each
         //call, cluttering up the dom
-        d3.selectAll(".d3-tip")
-            .remove();
+        // d3.selectAll(".d3-tip")
+        //     .remove();
 
         settings.stateCounting = "False";
-        if (vis != null) {
-            if (document.getElementById("showLabels").checked) {
-                settings.showLabels = "true";
-            } else {
-                settings.showLabels = "false";
-            }
+        if (document.getElementById("showLabels").checked) {
+            settings.showLabels = "true";
+        } else {
+            settings.showLabels = "false";
+        }
 
-            if (document.getElementById("useGridSeries").checked) {
-                settings.gridSeries = "xxx";
-                useGridSeries = true;
-            } else {
-                settings.gridSeries = null;
-                useGridSeries = false;
-            }
+        if (document.getElementById("useGridSeries").checked) {
+            settings.gridSeries = "xxx";
+            useGridSeries = true;
+        } else {
+            settings.gridSeries = null;
+            useGridSeries = false;
+        }
 
-            if (document.getElementById("synchXAxis").checked) {
-                settings.synchXAxis = "true";
-            } else {
-                settings.synchXAxis = null;
-            }
+        if (document.getElementById("synchXAxis").checked) {
+            settings.synchXAxis = "true";
+        } else {
+            settings.synchXAxis = null;
+        }
 
-            if (document.getElementById("synchYAxis").checked) {
-                settings.synchYAxis = "true";
-            } else {
-                settings.synchYAxis = null;
-            }
+        if (document.getElementById("synchYAxis").checked) {
+            settings.synchYAxis = "true";
+        } else {
+            settings.synchYAxis = null;
+        }
 
-            if (document.getElementById("displayXAxis").checked) {
-                settings.displayXAxis = "true";
-            } else {
-                settings.displayXAxis = null;
-            }
+        if (document.getElementById("displayXAxis").checked) {
+            settings.displayXAxis = "true";
+        } else {
+            settings.displayXAxis = null;
+        }
 
-            if (document.getElementById("displayYAxis").checked) {
-                settings.displayYAxis = "true";
-            } else {
-                settings.displayYAxis = null;
-            }
-            if (document.getElementById("synchSeries").checked) {
-                settings.synchSeries = "true";
-            } else {
-                settings.synchSeries = null;
-            }
+        if (document.getElementById("displayYAxis").checked) {
+            settings.displayYAxis = "true";
+        } else {
+            settings.displayYAxis = null;
+        }
+        if (document.getElementById("synchSeries").checked) {
+            settings.synchSeries = "true";
+        } else {
+            settings.synchSeries = null;
+        }
 
-            if (document.getElementById("synchNames").checked) {
-                settings.synchNames = "true";
-            } else {
-                settings.synchNames = null;
-            }
+        if (document.getElementById("synchNames").checked) {
+            settings.synchNames = "true";
+        } else {
+            settings.synchNames = null;
+        }
 
-            if (document.getElementById("thresholdMs").value) {
-                settings.thresholdMs = document.getElementById("thresholdMs").value;
-            } 
+        if (document.getElementById("thresholdMs").value) {
+            settings.thresholdMs = document.getElementById("thresholdMs").value;
+        } 
 
-            if (document.getElementById("bucketSize").value && getVisType() == "BarChart-bucket") {
-                settings.bucketSize = getBucketSize();
-            } 
+        if (document.getElementById("bucketSize").value && getVisType() == "BarChart-bucket") {
+            settings.bucketSize = getBucketSize();
+        } 
 
-            settings.stateChange = null;
-            const visType = getVisType();
+        settings.stateChange = null;
+        const visType = getVisType();
 
-            if (visType == "SeriesSessionMap-Stateful")
-            {
-                settings.stateChange = "Not a real field";
-            }
+        if (visType == "SeriesSessionMap-Stateful")
+        {
+            settings.stateChange = "Not a real field";
+        }
 
-            if (visType == "LineChart-Stateful")
-            {
-                settings.stateCounting = "True";
-            }
+        if (visType == "LineChart-Stateful")
+        {
+            settings.stateCounting = "True";
+        }
 
-            if (visType == "Bubble-flat")
-            {
-                settings.flattenSeries = "True";
-            } else {
-                settings.flattenSeries = "False";
-            }
+        if (visType == "Bubble-flat")
+        {
+            settings.flattenSeries = "True";
+        } else {
+            settings.flattenSeries = "False";
+        }
 
-            if (visType == "GeoMap")
-            {
-                settings.initialLatitude = "51.5";
-                settings.initialLongitude = "0.0";
-                settings.initialZoomLevel = 13;
-                settings.tileServerUrl = "https://{s}.tile.osm.org/{z}/{x}/{y}.png";
-                settings.tileServerAttribution = "&copy; <a href='http://osm.org/copyright'>OpenStreetMap</a> contributors";
-
-                if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
-                    settings.isColourByEventTimeEnabled = "False";
-                } else {
-                    settings.isColourByEventTimeEnabled = "True";
-                }
-            }
-
-            if (visType == 'FloorMap')
-            {
-                settings.config = '';
-
-                settings.isEditZoneModeEnabled = 'True';
-
-                if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
-                    settings.originLocation = "Top Left";
-                } else {
-                    settings.originLocation = "Bottom Left";
-                }
-
-                localFloorMapConfig = {
-                    "The Campus": {
-                        "Headquarters": {
-                            "Ground Floor": {
-                                "image": "testfloorplans/building1-floor0.png",
-                                "width": 100,
-                                "height": 60
-                            },
-                            "First Floor": {
-                                "image": "testfloorplans/building1-floor1.png",
-                                "width": 100,
-                                "height": 60
-                            },
-                            "Second Floor": {
-                                "image": "testfloorplans/building1-floor2.png",
-                                "width": 100,
-                                "height": 60
-                            },
-                            "Third Floor": {
-                                "image": "testfloorplans/building1-floor3.png",
-                                "width": 100,
-                                "height": 60
-                            }
-                        },
-                        "Downtown": {
-                            "Basement": {
-                                "image": "testfloorplans/building2-floorb.png",
-                                "width": 40,
-                                "height": 60,
-                                "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json",
-                                "isOriginTopLeft": true
-                            },
-                            "North Tower": {
-                                "image": "testfloorplans/building2-floorn.png",
-                                "width": 40,
-                                "height": 60,
-                                "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json"
-                            },
-                            "South Tower": {
-                                "image": "testfloorplans/building2-floors.png",
-                                "width": 40,
-                                "height": 60,
-                                "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json"
-                            }
-                        }
-                    }
-                };
-
-            }
-
-
-            //For testing data where the grid series key is a dateTimeMs
-            //settings.gridSeriesDateFormat = "GridFmt %A %d/%m/%y %H:%M";
-            //settings.seriesDateFormat = "SeriesFmt %A %d/%m/%y %H:%M";
-            //settings.nameDateFormat = "NameFmt %A %d/%m/%y %H:%M";
-
-            // define the max value for the value dimension to give us different scales
-            // of data
-            randomMax = Math.pow(10, Math.floor(Math.random() * 8));
-
-            if ((Math.floor(Math.random()  * 1000) % 3) == 0) {
-                settings.isEditZoneModeEnabled = "False";
-                settings.dateFormat = "";
-            } else {
-                settings.dateFormat = "%H:%M:%S on %A";
-            }
+        if (visType == "GeoMap")
+        {
+            settings.initialLatitude = "51.5";
+            settings.initialLongitude = "0.0";
+            settings.initialZoomLevel = 13;
+            settings.tileServerUrl = "https://{s}.tile.osm.org/{z}/{x}/{y}.png";
+            settings.tileServerAttribution = "&copy; <a href='http://osm.org/copyright'>OpenStreetMap</a> contributors";
 
             if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
                 settings.isColourByEventTimeEnabled = "False";
             } else {
                 settings.isColourByEventTimeEnabled = "True";
             }
+        }
+
+        if (visType == 'FloorMap')
+        {
+            settings.config = '';
+
+            settings.isEditZoneModeEnabled = 'True';
 
             if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
-                settings.isShowTagsEnabled = "True";
+                settings.originLocation = "Top Left";
             } else {
-                settings.isShowTagsEnabled = "False";
+                settings.originLocation = "Bottom Left";
             }
 
-            testData = new TestData();
+            localFloorMapConfig = {
+                "The Campus": {
+                    "Headquarters": {
+                        "Ground Floor": {
+                            "image": "testfloorplans/building1-floor0.png",
+                            "width": 100,
+                            "height": 60
+                        },
+                        "First Floor": {
+                            "image": "testfloorplans/building1-floor1.png",
+                            "width": 100,
+                            "height": 60
+                        },
+                        "Second Floor": {
+                            "image": "testfloorplans/building1-floor2.png",
+                            "width": 100,
+                            "height": 60
+                        },
+                        "Third Floor": {
+                            "image": "testfloorplans/building1-floor3.png",
+                            "width": 100,
+                            "height": 60
+                        }
+                    },
+                    "Downtown": {
+                        "Basement": {
+                            "image": "testfloorplans/building2-floorb.png",
+                            "width": 40,
+                            "height": 60,
+                            "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json",
+                            "isOriginTopLeft": true
+                        },
+                        "North Tower": {
+                            "image": "testfloorplans/building2-floorn.png",
+                            "width": 40,
+                            "height": 60,
+                            "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json"
+                        },
+                        "South Tower": {
+                            "image": "testfloorplans/building2-floors.png",
+                            "width": 40,
+                            "height": 60,
+                            "zoneDictionaryUuid": "staticUrl:testfloorplans/testzones.json"
+                        }
+                    }
+                }
+            };
 
-            dat = testData.create(getVisType(), pass++, useGridSeries, settings, randomMax);
-
-            postProcessTestData(dat);
-
-            sendDataToVis(dat);
         }
+
+
+        //For testing data where the grid series key is a dateTimeMs
+        //settings.gridSeriesDateFormat = "GridFmt %A %d/%m/%y %H:%M";
+        //settings.seriesDateFormat = "SeriesFmt %A %d/%m/%y %H:%M";
+        //settings.nameDateFormat = "NameFmt %A %d/%m/%y %H:%M";
+
+        // define the max value for the value dimension to give us different scales
+        // of data
+        randomMax = Math.pow(10, Math.floor(Math.random() * 8));
+
+        if ((Math.floor(Math.random()  * 1000) % 3) == 0) {
+            settings.isEditZoneModeEnabled = "False";
+            settings.dateFormat = "";
+        } else {
+            settings.dateFormat = "%H:%M:%S on %A";
+        }
+
+        if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
+            settings.isColourByEventTimeEnabled = "False";
+        } else {
+            settings.isColourByEventTimeEnabled = "True";
+        }
+
+        if ((Math.floor(Math.random()  * 1000) % 2) == 0) {
+            settings.isShowTagsEnabled = "True";
+        } else {
+            settings.isShowTagsEnabled = "False";
+        }
+
+        testData = new TestData();
+
+        dat = testData.create(getVisType(), pass++, useGridSeries, settings, randomMax);
+
+        postProcessTestData(dat);
+
+        sendDataToVis(dat);
     }
 
     var sendDataToVis = function(data) {
@@ -443,7 +466,24 @@
         var datCopy = clone(data);
 
         //send the new copy
-        vis.setData({}, settings, datCopy);
+        const iframe = document.getElementById('myIframe');
+        const iframeWindow = iframe.contentWindow;
+        let json = {
+            frameId: 123,
+            callbackId: 123,
+            data: {
+               functionName: "visualisationManager.setData",
+               params: [
+                {},
+                settings,
+                datCopy
+               ]
+            }
+        };
+        let jsonString = JSON.stringify(json);
+        if (iframeWindow) {
+            iframeWindow.postMessage(jsonString, '*');
+        }
     };
 
 
