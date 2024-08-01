@@ -17,13 +17,10 @@
     var visName;
     this.changeVis = function() {
         manageIframe();
-        setTimeout(() => {
-            // let visType = getVisType();
-            visName = getVisName();
-            // let rawType = getRawType(visType);
-            fetchAndInjectScripts(visName);
-        }, 1000);
-        
+        // let visType = getVisType();
+        visName = getVisName();
+        // let rawType = getRawType(visType);
+        fetchAndInjectScripts(visName);
     }
     
     function getVisName() {
@@ -74,31 +71,40 @@
 
     // Set to store loaded script names
     let loadedScripts = new Set();
+    let scriptQueue = [];
+    let pendingFetches = 0;
 
     function fetchAndInjectScripts(xmlName) {
         // Check if script is already loaded
         if (loadedScripts.has(xmlName)) {
             console.log(`Script ${xmlName} already loaded.`);
+            checkAndAssembleScripts();
             return;
         }
-
+    
+        pendingFetches++;
         fetchAndParseXML(xmlName)
             .then(({ xmlDoc, url }) => {
                 loadDependencies(xmlDoc, url, xmlName)
                     .then(scripts => {
-                        assembleAndPostJSON(scripts);
+                        scriptQueue = scriptQueue.concat(scripts);
                         // Mark the script as loaded after dependencies are processed
                         loadedScripts.add(xmlName);
+                        pendingFetches--;
+                        checkAndAssembleScripts();
                     })
                     .catch(error => {
                         console.error("Failed to load dependencies: ", error);
+                        pendingFetches--;
+                        checkAndAssembleScripts();
                     });
             })
             .catch(error => {
                 console.error("Failed to fetch and parse XML: ", error);
+                pendingFetches--;
+                checkAndAssembleScripts();
             });
     }
-
     // this isn't the best
     // could automatically check if there is a directory called the dependency name (more future proof)
     // leafletDraw folder has LeafletDrawCSS.script.resource.js
@@ -183,9 +189,33 @@
                 console.log(scripts);
                 resolve(scripts);
             } else {
-                reject(cnosole.error("No script dependencies found"));
+                reject(console.error("No script dependencies found"));
             }
         });
+    }
+
+    function checkAndAssembleScripts() {
+        if (pendingFetches === 0) {
+            // Deduplicate scripts
+            const uniqueScripts = [];
+            const scriptNames = new Set();
+    
+            scriptQueue.forEach(script => {
+                if (!scriptNames.has(script.name)) {
+                    uniqueScripts.push(script);
+                    scriptNames.add(script.name);
+                }
+            });
+    
+            // Move D3 script to the front if it exists
+            const d3Index = uniqueScripts.findIndex(script => script.name === 'D3');
+            if (d3Index !== -1) {
+                const [d3Script] = uniqueScripts.splice(d3Index, 1);
+                uniqueScripts.unshift(d3Script);
+            }
+            console.log(uniqueScripts);
+            assembleAndPostJSON(uniqueScripts);
+        }
     }
 
     function assembleAndPostJSON(scripts) {
