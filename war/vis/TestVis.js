@@ -63,8 +63,6 @@
         newIframe.id = 'myIframe';
         // Append a random query string to force the browser to fetch a new document
         newIframe.src = 'vis.html?' + new Date().getTime();
-        
-        // Append the new iframe to the div with id 'iframe'
         document.getElementById('iframe').appendChild(newIframe);
         loadedScripts.clear();
     }    
@@ -104,22 +102,16 @@
                 checkAndAssembleScripts();
             });
     }
+
     // this isn't the best
-    // could automatically check if there is a directory called the dependency name (more future proof)
-    // leafletDraw folder has LeafletDrawCSS.script.resource.js
+    // as leafletDraw folder has LeafletDrawCSS.script.resource.js etc
     function dependencyUrls(xmlName){
         const baseName = xmlName.split('.')[0];
         const urls = [];
         urls[0] = "../stroom-content/Visualisations/Version3/" + baseName + ".Script.xml";
         urls[1] = "../stroom-content/Visualisations/Version3/Dependencies/" + baseName + "/" + baseName + ".Script.xml";
-        // urls[2] = "../stroom-content/Visualisations/Version3/Dependencies/Chroma/" + baseName + ".Script.xml";
-        // urls[3] = "../stroom-content/Visualisations/Version3/Dependencies/D3/" + baseName + ".Script.xml";
-        // urls[4] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Grid/" + baseName + ".Script.xml";
-        // urls[5] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Tip/" + baseName + ".Script.xml";
-        // urls[6] = "../stroom-content/Visualisations/Version3/Dependencies/JSHashes/" + baseName + ".Script.xml";
-        // urls[7] = "../stroom-content/Visualisations/Version3/Dependencies/Leaflet/" + baseName + ".Script.xml";
-        // urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/" + baseName + ".Script.xml";
-        // urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/Underscore/" + baseName + ".Script.xml";
+        urls[2] = "../stroom-content/Visualisations/Version3/Dependencies/Leaflet/" + baseName + ".Script.xml";
+        urls[3] = "../stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/" + baseName + ".Script.xml";
         return urls;
     }
 
@@ -150,8 +142,7 @@
                 });
         });
     }
-    
-    // TODO remember which scripts it has seen before calling back to fetch
+
     function loadDependencies(dependenciesXML, baseUrl, xmlName) {
         return new Promise((resolve, reject) => {
             const scripts = [];
