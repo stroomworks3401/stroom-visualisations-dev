@@ -101,19 +101,20 @@
 
     // this isn't the best
     // could automatically check if there is a directory called the dependency name (more future proof)
+    // leafletDraw folder has LeafletDrawCSS.script.resource.js
     function dependencyUrls(xmlName){
         const baseName = xmlName.split('.')[0];
         const urls = [];
         urls[0] = "../stroom-content/Visualisations/Version3/" + baseName + ".Script.xml";
-        urls[1] = "../stroom-content/Visualisations/Version3/Dependencies/" + baseName + ".Script.xml";
-        urls[2] = "../stroom-content/Visualisations/Version3/Dependencies/Chroma/" + baseName + ".Script.xml";
-        urls[3] = "../stroom-content/Visualisations/Version3/Dependencies/D3/" + baseName + ".Script.xml";
-        urls[4] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Grid/" + baseName + ".Script.xml";
-        urls[5] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Tip/" + baseName + ".Script.xml";
-        urls[6] = "../stroom-content/Visualisations/Version3/Dependencies/JSHashes/" + baseName + ".Script.xml";
-        urls[7] = "../stroom-content/Visualisations/Version3/Dependencies/Leaflet/" + baseName + ".Script.xml";
-        urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/" + baseName + ".Script.xml";
-        urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/Underscore/" + baseName + ".Script.xml";
+        urls[1] = "../stroom-content/Visualisations/Version3/Dependencies/" + baseName + "/" + baseName + ".Script.xml";
+        // urls[2] = "../stroom-content/Visualisations/Version3/Dependencies/Chroma/" + baseName + ".Script.xml";
+        // urls[3] = "../stroom-content/Visualisations/Version3/Dependencies/D3/" + baseName + ".Script.xml";
+        // urls[4] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Grid/" + baseName + ".Script.xml";
+        // urls[5] = "../stroom-content/Visualisations/Version3/Dependencies/D3-Tip/" + baseName + ".Script.xml";
+        // urls[6] = "../stroom-content/Visualisations/Version3/Dependencies/JSHashes/" + baseName + ".Script.xml";
+        // urls[7] = "../stroom-content/Visualisations/Version3/Dependencies/Leaflet/" + baseName + ".Script.xml";
+        // urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/LeafletDraw/" + baseName + ".Script.xml";
+        // urls[8] = "../stroom-content/Visualisations/Version3/Dependencies/Underscore/" + baseName + ".Script.xml";
         return urls;
     }
 
