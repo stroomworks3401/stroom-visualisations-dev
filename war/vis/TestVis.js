@@ -77,7 +77,6 @@
     function fetchAndInjectScripts(xmlName) {
         // Check if script is already loaded
         if (loadedScripts.has(xmlName)) {
-            console.log(`Script ${xmlName} already loaded.`);
             checkAndAssembleScripts();
             return;
         }
@@ -186,7 +185,6 @@
             }
     
             if (scripts.length > 0) {
-                console.log(scripts);
                 resolve(scripts);
             } else {
                 reject(console.error("No script dependencies found"));
@@ -213,6 +211,14 @@
                 const [d3Script] = uniqueScripts.splice(d3Index, 1);
                 uniqueScripts.unshift(d3Script);
             }
+
+            // Move the vis script to the end if it exists
+            const visIndex = uniqueScripts.findIndex(script => script.name === visName);
+            if (visIndex !== -1) {
+                const [visScript] = uniqueScripts.splice(visIndex, 1);
+                uniqueScripts.push(visScript);
+            }
+
             console.log(uniqueScripts);
             assembleAndPostJSON(uniqueScripts);
             loadedScripts = new Set();
