@@ -247,6 +247,7 @@
     // .setVisType instansiates the specific vis
     // add selected theme
     function setVisType(){
+        vis = visName;
         const iframe = document.getElementById('myIframe');
         const iframeWindow = iframe.contentWindow;
         let json = {
@@ -263,31 +264,6 @@
         let jsonString = JSON.stringify(json);
         if (iframeWindow) {
             iframeWindow.postMessage(jsonString, '*');
-        }
-    }
-
-    function show(type) {
-        //var div = document.getElementById("visualisation");
-        //div.innerHTML = "";
-
-        vis = eval("new visualisations." + getRawType(type) + "()");
-
-        var container = document.getElementById("container");
-
-        var element = vis.element;
-
-        element.style.width = "100%";
-        element.style.height = "100%";
-
-        container.innerHTML = "";
-        container.appendChild(element);
-
-        if (vis != null) {
-            vis.resize();
-            // 				d3.json("data.json", function(root) {
-            // 					var dat = createData(0);
-            // 					vis.setData(dat);
-            // 				});
         }
     }
 
@@ -531,10 +507,21 @@
         }
     };
 
-
     this.resize = function() {
         if (vis != null) {
-            vis.resize();
+            const iframe = document.getElementById('myIframe');
+            const iframeWindow = iframe.contentWindow;
+            let json = {
+                frameId: 123,
+                callbackId: 123,
+                data: {
+                functionName: "visualisationManager.resize",
+                }
+            };
+            let jsonString = JSON.stringify(json);
+            if (iframeWindow) {
+                iframeWindow.postMessage(jsonString, '*');
+            }
         }
     };
 
