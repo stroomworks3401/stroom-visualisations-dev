@@ -215,6 +215,9 @@
             }
             console.log(uniqueScripts);
             assembleAndPostJSON(uniqueScripts);
+            loadedScripts = new Set();
+            scriptQueue = [];
+            pendingFetches = 0;
         }
     }
 
