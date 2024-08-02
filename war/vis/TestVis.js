@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// TODO understand the frame and callback IDs
 (function() {
     var visName;
     this.changeVis = function() {
@@ -228,10 +229,6 @@
         }));
     
         let json = {
-
-            // Make more permanent
-            frameId: 123,
-            callbackId: 123,
             data: {
                 functionName: "visualisationManager.injectScripts",
                 params: [params]
@@ -251,8 +248,6 @@
         const iframe = document.getElementById('myIframe');
         const iframeWindow = iframe.contentWindow;
         let json = {
-            frameId: 123,
-            callbackId: 123,
             data: {
                functionName: "visualisationManager.setVisType",
                params: [
@@ -393,7 +388,7 @@
                 settings.originLocation = "Bottom Left";
             }
 
-            localFloorMapConfig = {
+            settings.config = {
                 "The Campus": {
                     "Headquarters": {
                         "Ground Floor": {
@@ -440,7 +435,7 @@
                     }
                 }
             };
-
+            settings.config = JSON.stringify(settings.config);
         }
 
 
@@ -490,8 +485,6 @@
         const iframe = document.getElementById('myIframe');
         const iframeWindow = iframe.contentWindow;
         let json = {
-            frameId: 123,
-            callbackId: 123,
             data: {
                functionName: "visualisationManager.setData",
                params: [
@@ -512,8 +505,6 @@
             const iframe = document.getElementById('myIframe');
             const iframeWindow = iframe.contentWindow;
             let json = {
-                frameId: 123,
-                callbackId: 123,
                 data: {
                 functionName: "visualisationManager.resize",
                 }
