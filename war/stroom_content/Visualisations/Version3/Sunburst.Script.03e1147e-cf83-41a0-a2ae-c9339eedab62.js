@@ -50,9 +50,11 @@ if (!visualisations) {
         var initialised = false;
         var canvas;
         var lastClickedNode = null;
-        var initialDepth = 2; // default depth
+        var initialDepth = 20; // default depth
         var color = commonConstants.categoryGoogle();
         var prevScale = 1;
+        var hiddenSmallArcs = {};
+
 
         //one off initialisation of all the local variables, including
         //appending various static dom elements
@@ -285,8 +287,57 @@ if (!visualisations) {
             // Get all nodes, but initially hide those deeper than initialDepth
             var nodes = partition.nodes(formattedData);
 
+            // Threshold for small arcs (1 degree in radians)
+            var thresholdAngle = 1 * Math.PI / 180;
+
+             // Group small arcs by depth (layer)
+            var layers = {};
+            nodes.forEach(function(d) {
+                if (!layers[d.depth]) {
+                    layers[d.depth] = { smallArcs: [], totalValue: 0 };
+                }
+                var arcSize = d.dx;
+                if (arcSize < thresholdAngle) {
+                    layers[d.depth].smallArcs.push(d);
+                    layers[d.depth].totalValue += d.value;
+                }
+            });
+
+            // For each depth, create an "Other" arc if there are small arcs
+            Object.keys(layers).forEach(function(depth) {
+                var layerData = layers[depth];
+                if (layerData.smallArcs.length > 0) {
+                    // Create an "Other" node for this depth
+                    var otherArc = {
+                        name: "Other",
+                        children: layerData.smallArcs,  // Include small arcs as children
+                        value: layerData.totalValue     // Set the combined value of small arcs
+                    };
+
+                    // Add "Other" arc to the parent node at this depth
+                    var parent = nodes.find(function(d) {
+                        return d.depth === +depth - 1; // Find the parent node
+                    });
+                    if (parent && parent.children) {
+                        parent.children.push(otherArc);
+                    }
+                }
+            });
+
+            // When hiding small arcs initially
+            nodes = nodes.filter(function(d) {
+                var layer = layers[d.depth];
+                if (layer && layer.smallArcs.includes(d)) {
+                    // Store hidden small arcs separately for later use
+                    if (!hiddenSmallArcs[d.depth]) hiddenSmallArcs[d.depth] = [];
+                    hiddenSmallArcs[d.depth].push(d);
+                    return false;  // Filter out small arcs initially
+                }
+                return true;
+            });
+        
             // Bind data to the paths, and append new paths
-            var paths = svg.selectAll("path").data(nodes);
+            var paths = svg.selectAll("path").data(partition.nodes(formattedData));
             
             paths.enter().append("path")
                 .attr("d", arc)
@@ -312,9 +363,11 @@ if (!visualisations) {
                     return d.depth > initialDepth ? 0 : 1;  // Initially hide deeper layers
                 })
                 .on("click", function(d) {
-                    if (d.children) {
+                    if (d.name === "Other") {
+                        expandArc(d);  
+                    } else if (d.children) {
                         lastClickedNode = d;
-                        expandArc(d);  // Expand more layers on click
+                        expandArc(d);  // Expand more layers
                     }
                 });
 
@@ -333,6 +386,23 @@ if (!visualisations) {
         var EPSILON = 1e-6;
         var targetDepth;
         function expandArc(data) {
+
+            if (data.name === "Other") {
+                // When "Other" is clicked, reveal the hidden small arcs for this depth
+                var depth = data.depth;
+        
+                if (hiddenSmallArcs[depth]) {
+                    data.children = hiddenSmallArcs[depth];  // Assign small arcs back to the parent
+                    delete hiddenSmallArcs[depth];  // Clear the hidden arcs for this depth
+                }
+                var parent = data.parent;
+                if (parent) {
+                    parent.children = parent.children.filter(function(child) {
+                        return child.name !== "Other";
+                    });
+                }
+            }
+
             targetDepth = data.depth + initialDepth;
 
             svg.selectAll("text.label").remove();
