@@ -1,4 +1,4 @@
-- name: Release Viz zip
+name: Release Viz zip
 
 jobs:
   build-project:
