@@ -1,5 +1,8 @@
 name: Release Viz zip
 
+on:
+  push:
+
 jobs:
   build-project:
     runs-on: ubuntu-20.04
