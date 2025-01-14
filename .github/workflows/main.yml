@@ -1,0 +1,30 @@
+- name: Release Viz zip
+
+jobs:
+  build-project:
+    runs-on: ubuntu-20.04
+    env:
+      # Static env vars
+
+      # Fixed ssh-agent socket so multiple steps can use the same agent
+      # if needs be. Used by update_gh_pages.sh
+      SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
+    steps:
+      - name: Checkout code
+        id: checkout_code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Zip content
+        id: zip content
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: war/stroom-content
+          dest: visualisations.zip
+          recursive: true
+      - name: Upload artifact
+        id: upload_artifact       
+        uses: actions/upload-artifact@v1.1
+        with:
+          name: my-artifact
+          path: ${{ github.workspace }}/visualisations.zip
